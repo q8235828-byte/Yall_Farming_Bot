@@ -198,7 +198,7 @@
                 <div class="pt-2 border-t border-slate-800/80 flex items-center gap-3">
                     <div class="flex-1">
                         <label class="text-[11px] text-slate-400 block mb-1">Start Account #</label>
-                        <input type="number" id="startNumInput" value="233" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white">
+                        <input type="number" id="startNumInput" placeholder="e.g. 1 (Optional)" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white">
                     </div>
                     <div class="flex-1">
                         <label class="text-[11px] text-slate-400 block mb-1">End Account #</label>
@@ -530,8 +530,10 @@
                 alert('Please select at least 1 MEmu emulator instance!');
                 return;
             }
-            const startNum = parseInt(document.getElementById('startNumInput').value) || 233;
-            const endNum = parseInt(document.getElementById('endNumInput').value) || null;
+            const startVal = document.getElementById('startNumInput').value.trim();
+            const startNum = startVal ? parseInt(startVal) : null;
+            const endVal = document.getElementById('endNumInput').value.trim();
+            const endNum = endVal ? parseInt(endVal) : null;
 
             try {
                 const res = await fetch('/api/start_farming', {
@@ -544,10 +546,12 @@
                     })
                 });
                 const data = await res.json();
-                if (!data.success) alert(data.error);
+                if (!data.success) {
+                    alert('Error starting bot: ' + data.error);
+                }
                 fetchState();
             } catch (err) {
-                alert('Failed to start: ' + err);
+                alert('Failed to connect to server: ' + err);
             }
         }
 

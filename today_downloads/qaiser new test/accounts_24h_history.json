@@ -129,8 +129,24 @@
   },
   "user237@bhullehshahsilage.com": {
     "email": "user237@bhullehshahsilage.com",
-    "completed_at_timestamp": 1795408248.320468,
-    "completed_at_datetime": "2026-11-23 09:30:48",
+    "completed_at_timestamp": 1795432950.7307446,
+    "completed_at_datetime": "2026-11-23 16:22:30",
+    "free_rewards": "6/6",
+    "golds_chest": "Skipped",
+    "status": "Success_Completed"
+  },
+  "user244@bhullehshahsilage.com": {
+    "email": "user244@bhullehshahsilage.com",
+    "completed_at_timestamp": 1795433565.8652575,
+    "completed_at_datetime": "2026-11-23 16:32:45",
+    "free_rewards": "6/6",
+    "golds_chest": "Skipped",
+    "status": "Success_Completed"
+  },
+  "user245@bhullehshahsilage.com": {
+    "email": "user245@bhullehshahsilage.com",
+    "completed_at_timestamp": 1795435343.9396021,
+    "completed_at_datetime": "2026-11-23 17:02:23",
     "free_rewards": "6/6",
     "golds_chest": "Skipped",
     "status": "Success_Completed"

@@ -293,8 +293,8 @@ def run_continuous_sheet_loop(
             num = parse_user_num(em)
             if num >= min_user_num and (max_user_num is None or num <= max_user_num) and em.lower() not in done_emails:
                 status = a.get("Status", "").strip()
-                # Skip if already completed or actively being processed by another terminal/instance
-                if status in ["Success_Completed", "Processing"]:
+                # Skip if already completed (allow retrying interrupted Processing or Failed accounts)
+                if status == "Success_Completed":
                     continue
                 dev_col = a.get("Device_ID", "").strip()
                 if match_device and dev_col and dev_col != device_id:

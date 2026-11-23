@@ -3,14 +3,15 @@ import json
 import os
 import platform
 import subprocess
+import sys
 import urllib.request
 import uuid
 from datetime import datetime
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
-LICENSE_FILE = os.path.join(CURRENT_DIR, ".license.json")
 DEFAULT_CLOUDFLARE_URL = "https://yalla-licensing.q8235828.workers.dev"
 PAGES_DEV_BUY_URL = "https://yalla-farming.pages.dev"
+USER_HOME_LICENSE = os.path.join(os.path.expanduser("~"), ".yalla_license.json")
 
 
 def get_machine_hwid() -> str:
@@ -39,19 +40,40 @@ def get_machine_hwid() -> str:
     return f"{sha[0:4]}-{sha[4:8]}-{sha[8:12]}-{sha[12:16]}"
 
 
+def get_license_file_path() -> str:
+    """Returns persistent license path, prioritizing app root directory and user home."""
+    if getattr(sys, "frozen", False):
+        exe_dir = os.path.dirname(sys.executable)
+        return os.path.join(exe_dir, ".license.json")
+    return os.path.join(CURRENT_DIR, ".license.json")
+
+
 def load_saved_license() -> dict:
-    if os.path.exists(LICENSE_FILE):
-        try:
-            with open(LICENSE_FILE, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except Exception:
-            return {}
+    paths = [get_license_file_path(), USER_HOME_LICENSE, os.path.join(CURRENT_DIR, ".license.json")]
+    for p in paths:
+        if os.path.exists(p):
+            try:
+                with open(p, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    if data and data.get("license_key"):
+                        return data
+            except Exception:
+                pass
     return {}
 
 
 def save_license(data: dict):
+    # Save to primary location
+    primary = get_license_file_path()
     try:
-        with open(LICENSE_FILE, "w", encoding="utf-8") as f:
+        with open(primary, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2)
+    except Exception:
+        pass
+
+    # Also save to user home as persistent backup across exe moves
+    try:
+        with open(USER_HOME_LICENSE, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2)
     except Exception:
         pass

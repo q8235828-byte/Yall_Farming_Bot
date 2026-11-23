@@ -20,9 +20,20 @@ if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
 from google_sheet_sync import fetch_all_accounts_from_sheet, update_google_sheet, load_24h_history
-from licensing import get_machine_hwid, is_activated, verify_and_activate, PAGES_DEV_BUY_URL
 
-app = Flask(__name__, template_folder=os.path.join(CURRENT_DIR, "templates"))
+try:
+    from licensing import get_machine_hwid, is_activated, verify_and_activate, PAGES_DEV_BUY_URL, DEFAULT_CLOUDFLARE_URL
+except ImportError:
+    from dashboard.licensing import get_machine_hwid, is_activated, verify_and_activate, PAGES_DEV_BUY_URL, DEFAULT_CLOUDFLARE_URL
+
+if getattr(sys, "frozen", False):
+    TEMPLATE_DIR = os.path.join(sys._MEIPASS, "dashboard", "templates")
+    if not os.path.exists(TEMPLATE_DIR):
+        TEMPLATE_DIR = os.path.join(sys._MEIPASS, "templates")
+else:
+    TEMPLATE_DIR = os.path.join(CURRENT_DIR, "templates")
+
+app = Flask(__name__, template_folder=TEMPLATE_DIR)
 
 # Global App State
 APP_STATE = {
@@ -32,7 +43,7 @@ APP_STATE = {
     "threads": [],
     "stop_requested": False
 }
-STATE_LOCK = threading.Lock()
+STATE_LOCK = threading.RLock()
 ACCOUNTS_CACHE_FILE = os.path.join(CURRENT_DIR, "cached_accounts.json")
 
 
@@ -331,7 +342,7 @@ def license_activate():
     req_data = request.json or {}
     key = req_data.get("license_key", "").strip()
     email = req_data.get("email", "").strip()
-    worker_url = req_data.get("worker_url", "https://yalla-licensing.workers.dev")
+    worker_url = req_data.get("worker_url") or DEFAULT_CLOUDFLARE_URL
 
     if not key:
         return jsonify({"success": False, "error": "Please enter a license key."}), 400
@@ -361,7 +372,7 @@ def start_farming():
     if not devices:
         return jsonify({"success": False, "error": "No emulator devices selected"}), 400
 
-    start_num = data.get("start_num", 233)
+    start_num = data.get("start_num")
     end_num = data.get("end_num")
 
     with STATE_LOCK:
@@ -371,18 +382,30 @@ def start_farming():
         # Filter eligible accounts
         import re
         def parse_user_num(e):
-            m = re.search(r'user(\d+)', e.lower())
-            return int(m.group(1)) if m else 0
+            m = re.search(r'user(\d+)', str(e).lower())
+            return int(m.group(1)) if m else None
 
         eligible = []
-        for a in APP_STATE["accounts"]:
-            num = parse_user_num(a.get("Email", ""))
-            if num >= start_num and (end_num is None or num <= end_num):
-                if a.get("Status") != "Success_Completed":
-                    eligible.append(a)
+        for idx, a in enumerate(APP_STATE["accounts"]):
+            u_num = parse_user_num(a.get("Email", ""))
+            row_num = u_num if u_num is not None else (idx + 1)
+
+            if start_num is not None and row_num < start_num:
+                continue
+            if end_num is not None and row_num > end_num:
+                continue
+
+            if a.get("Status") != "Success_Completed":
+                eligible.append(a)
 
         if not eligible:
-            return jsonify({"success": False, "error": f"No eligible accounts found in range >= {start_num}"}), 400
+            msg = "No eligible accounts found in specified range"
+            if start_num is not None:
+                msg += f" (Start: {start_num}"
+                if end_num is not None:
+                    msg += f", End: {end_num}"
+                msg += ")"
+            return jsonify({"success": False, "error": msg}), 400
 
         APP_STATE["is_running"] = True
         APP_STATE["stop_requested"] = False
@@ -392,8 +415,6 @@ def start_farming():
         num_devices = len(devices)
         chunk_size = (len(eligible) + num_devices - 1) // num_devices
 
-        log_msg(f"[*] Starting farming across {num_devices} devices for {len(eligible)} accounts...")
-
         for i, dev in enumerate(devices):
             chunk = eligible[i * chunk_size : (i + 1) * chunk_size]
             if chunk:
@@ -401,7 +422,6 @@ def start_farming():
                 t.start()
                 APP_STATE["threads"].append(t)
 
-        # Monitor thread to reset is_running when all finish
         def supervisor():
             for t in APP_STATE["threads"]:
                 t.join()
@@ -411,6 +431,7 @@ def start_farming():
 
         threading.Thread(target=supervisor, daemon=True).start()
 
+    log_msg(f"[*] Starting farming across {num_devices} devices for {len(eligible)} accounts...")
     return jsonify({"success": True, "accounts_count": len(eligible)})
 
 

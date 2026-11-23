@@ -25,8 +25,14 @@ def open_ui():
 
 
 if __name__ == "__main__":
+    try:
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+        sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+    except Exception:
+        pass
+
     print("=" * 65)
-    print("   🎲 YALLA FARMING STUDIO ENTERPRISE PRO v2.5")
+    print("   [+] YALLA FARMING STUDIO ENTERPRISE PRO v2.5")
     print("   RankerX-Grade Multi-Instance Engine & HWID Licensing")
     print("=" * 65)
     print("[*] Launching Dashboard on http://127.0.0.1:5000 ...")
