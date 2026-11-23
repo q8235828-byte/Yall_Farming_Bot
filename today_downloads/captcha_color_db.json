@@ -1,0 +1,138 @@
+[
+  {
+    "color_family": "Green",
+    "mean_hsv": [
+      63.3,
+      85.2,
+      230.2
+    ],
+    "slots_found": 2,
+    "slot_positions": [
+      {
+        "x": 274,
+        "y": 193,
+        "w": 103,
+        "h": 104,
+        "area": 5832.5
+      },
+      {
+        "x": 421,
+        "y": 193,
+        "w": 95,
+        "h": 80,
+        "area": 5808.0
+      }
+    ],
+    "piece_x": 80,
+    "dist_slot1": 194,
+    "dist_slot2": 341,
+    "sample_id": 3,
+    "image_file": "sample_3.png",
+    "knob_pos": [
+      217,
+      810
+    ]
+  },
+  {
+    "color_family": "Turquoise/Cyan",
+    "mean_hsv": [
+      85.0,
+      138.6,
+      212.6
+    ],
+    "slots_found": 2,
+    "slot_positions": [
+      {
+        "x": 254,
+        "y": 239,
+        "w": 98,
+        "h": 90,
+        "area": 5954.0
+      },
+      {
+        "x": 402,
+        "y": 239,
+        "w": 97,
+        "h": 90,
+        "area": 5823.5
+      }
+    ],
+    "piece_x": 80,
+    "dist_slot1": 174,
+    "dist_slot2": 322,
+    "sample_id": 7,
+    "image_file": "sample_7.png",
+    "knob_pos": [
+      217,
+      810
+    ]
+  },
+  {
+    "color_family": "Blue",
+    "mean_hsv": [
+      98.5,
+      237.2,
+      221.0
+    ],
+    "slots_found": 2,
+    "slot_positions": [
+      {
+        "x": 213,
+        "y": 255,
+        "w": 103,
+        "h": 103,
+        "area": 5728.5
+      },
+      {
+        "x": 396,
+        "y": 254,
+        "w": 80,
+        "h": 95,
+        "area": 5783.0
+      }
+    ],
+    "piece_x": 80,
+    "dist_slot1": 133,
+    "dist_slot2": 316,
+    "sample_id": 10,
+    "image_file": "sample_10.png",
+    "knob_pos": [
+      217,
+      810
+    ]
+  },
+  {
+    "color_family": "Pink/Red",
+    "mean_hsv": [
+      175.0,
+      91.5,
+      244.4
+    ],
+    "slots_found": 2,
+    "slot_positions": [
+      {
+        "x": 214,
+        "y": 212,
+        "w": 98,
+        "h": 90,
+        "area": 5885.5
+      },
+      {
+        "x": 364,
+        "y": 212,
+        "w": 97,
+        "h": 91,
+        "area": 5888.0
+      }
+    ],
+    "piece_x": 80,
+    "dist_slot1": 134,
+    "dist_slot2": 284,
+    "sample_id": 15,
+    "image_file": "sample_15.png",
+    "knob_pos": [
+      217,
+      810
+    ]
+  }
+]
