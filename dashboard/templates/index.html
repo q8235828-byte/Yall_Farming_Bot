@@ -23,6 +23,55 @@
 </head>
 <body class="min-h-screen flex flex-col">
 
+    <!-- RankerX-Style License Activation Modal -->
+    <div id="licenseModal" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-xl flex items-center justify-center p-4 transition-all duration-300 hidden">
+        <div class="glass-card max-w-md w-full rounded-3xl p-7 border border-emerald-500/30 shadow-2xl space-y-5 text-center relative overflow-hidden">
+            <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center mx-auto text-3xl shadow-xl shadow-emerald-500/30 text-slate-900">
+                <i class="fa-solid fa-shield-halved"></i>
+            </div>
+            
+            <div>
+                <h2 class="text-xl font-bold text-white tracking-tight">Software Activation Required</h2>
+                <p class="text-xs text-slate-400 mt-1">Please enter your license key to unlock Yalla Farming Studio.</p>
+            </div>
+
+            <!-- HWID Display Box -->
+            <div class="bg-slate-900/90 rounded-xl p-3 border border-slate-800 text-left">
+                <div class="flex items-center justify-between text-[11px] text-slate-400 mb-1">
+                    <span>Your Machine HWID:</span>
+                    <button onclick="copyHwid()" class="text-emerald-400 hover:underline flex items-center gap-1">
+                        <i class="fa-regular fa-copy"></i> Copy
+                    </button>
+                </div>
+                <div id="modalHwid" class="font-mono text-xs font-bold text-teal-300 select-all tracking-wider">Detecting...</div>
+            </div>
+
+            <!-- Inputs -->
+            <div class="space-y-3 text-left">
+                <div>
+                    <label class="text-[11px] font-medium text-slate-400 block mb-1">Your Registered Email</label>
+                    <input type="email" id="licenseEmailInput" placeholder="buyer@example.com" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500">
+                </div>
+                <div>
+                    <label class="text-[11px] font-medium text-slate-400 block mb-1">License Key</label>
+                    <input type="text" id="licenseKeyInput" placeholder="YALLA-XXXX-XXXX-XXXX" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs font-mono font-bold text-emerald-300 focus:outline-none focus:border-emerald-500">
+                </div>
+            </div>
+
+            <div id="licenseError" class="text-xs text-rose-400 font-medium hidden"></div>
+
+            <!-- Action Buttons -->
+            <div class="space-y-2 pt-1">
+                <button id="btnActivateLicense" onclick="submitActivation()" class="w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold rounded-xl shadow-lg shadow-emerald-500/20 text-xs transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-key"></i> ACTIVATE SOFTWARE
+                </button>
+                <a id="buyLicenseLink" href="https://yalla-farming.pages.dev" target="_blank" class="block w-full py-2.5 bg-slate-800/80 hover:bg-slate-700 text-slate-300 font-semibold rounded-xl text-xs transition border border-slate-700">
+                    <i class="fa-solid fa-cart-shopping mr-1.5 text-amber-400"></i> Don't have a license? Buy Now ($1,000)
+                </a>
+            </div>
+        </div>
+    </div>
+
     <!-- Top Navbar -->
     <header class="glass-card sticky top-0 z-50 px-6 py-4 flex items-center justify-between border-b border-slate-800">
         <div class="flex items-center space-x-3">
@@ -41,7 +90,7 @@
             <!-- License Badge -->
             <div class="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-emerald-950/60 border border-emerald-500/30 text-emerald-300 text-xs font-medium">
                 <span class="w-2 h-2 rounded-full bg-emerald-400 pulse-active"></span>
-                <span>License: <strong class="text-emerald-200">ACTIVE (HWID LOCKED)</strong></span>
+                <span id="licenseBadgeText">License: <strong class="text-emerald-200">ACTIVE (HWID LOCKED)</strong></span>
             </div>
             <!-- Connected Devices Counter -->
             <div class="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700 text-slate-300 text-xs">
@@ -284,6 +333,27 @@
                     btnStop.className = 'w-full py-2.5 bg-slate-800 text-slate-500 font-semibold rounded-xl text-xs flex items-center justify-center gap-2 cursor-not-allowed';
                 }
 
+                // Check License Status
+                const modal = document.getElementById('licenseModal');
+                const hwidElem = document.getElementById('modalHwid');
+                if (data.license) {
+                    if (hwidElem) hwidElem.innerText = data.license.hwid || 'Detecting...';
+                    if (data.license.buy_url) {
+                        const buyLink = document.getElementById('buyLicenseLink');
+                        if (buyLink) buyLink.href = data.license.buy_url;
+                    }
+
+                    if (!data.license.activated) {
+                        modal.classList.remove('hidden');
+                    } else {
+                        modal.classList.add('hidden');
+                        const plan = (data.license.details && data.license.details.plan) ? data.license.details.plan : 'Pro Lifetime';
+                        const cust = (data.license.details && data.license.details.customer_name) ? data.license.details.customer_name : 'Owner';
+                        const badge = document.getElementById('licenseBadgeText');
+                        if (badge) badge.innerHTML = `License: <strong class="text-emerald-200">ACTIVE (${cust})</strong>`;
+                    }
+                }
+
                 // Update accounts table if changed
                 if (JSON.stringify(allAccounts) !== JSON.stringify(data.accounts)) {
                     allAccounts = data.accounts;
@@ -487,6 +557,51 @@
                 fetchState();
             } catch (err) {
                 alert('Failed to stop: ' + err);
+            }
+        }
+
+        function copyHwid() {
+            const hwid = document.getElementById('modalHwid').innerText;
+            navigator.clipboard.writeText(hwid);
+            alert('Hardware ID copied: ' + hwid);
+        }
+
+        async function submitActivation() {
+            const email = document.getElementById('licenseEmailInput').value.trim();
+            const key = document.getElementById('licenseKeyInput').value.trim();
+            const errDiv = document.getElementById('licenseError');
+            const btn = document.getElementById('btnActivateLicense');
+
+            if (!key) {
+                errDiv.innerText = 'Please enter a valid license key!';
+                errDiv.classList.remove('hidden');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1"></i> Verifying with Cloudflare...`;
+            errDiv.classList.add('hidden');
+
+            try {
+                const res = await fetch('/api/license/activate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: email, license_key: key })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert('🎉 Activation Successful! Software unlocked.');
+                    fetchState();
+                } else {
+                    errDiv.innerText = data.error || 'Activation failed.';
+                    errDiv.classList.remove('hidden');
+                }
+            } catch (err) {
+                errDiv.innerText = 'Error contacting license server: ' + err;
+                errDiv.classList.remove('hidden');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<i class="fa-solid fa-key"></i> ACTIVATE SOFTWARE`;
             }
         }
 

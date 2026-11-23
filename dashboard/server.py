@@ -20,6 +20,7 @@ if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
 from google_sheet_sync import fetch_all_accounts_from_sheet, update_google_sheet, load_24h_history
+from licensing import get_machine_hwid, is_activated, verify_and_activate, PAGES_DEV_BUY_URL
 
 app = Flask(__name__, template_folder=os.path.join(CURRENT_DIR, "templates"))
 
@@ -252,8 +253,15 @@ def get_state():
 
         coins_str = f"{total_coins_num / 1000:.1f}K" if total_coins_num >= 1000 else str(int(total_coins_num))
 
+        active, lic = is_activated()
         return jsonify({
             "is_running": APP_STATE["is_running"],
+            "license": {
+                "activated": active,
+                "hwid": get_machine_hwid(),
+                "details": lic,
+                "buy_url": PAGES_DEV_BUY_URL
+            },
             "stats": {
                 "total": total,
                 "completed": completed,
@@ -307,9 +315,47 @@ def worker_instance_runner(device_id: str, accounts_slice: list):
     log_msg(f"[{device_id}] Worker completed all assigned accounts.")
 
 
+@app.route("/api/license/status")
+def license_status():
+    active, data = is_activated()
+    return jsonify({
+        "activated": active,
+        "hwid": get_machine_hwid(),
+        "details": data,
+        "buy_url": PAGES_DEV_BUY_URL
+    })
+
+
+@app.route("/api/license/activate", methods=["POST"])
+def license_activate():
+    req_data = request.json or {}
+    key = req_data.get("license_key", "").strip()
+    email = req_data.get("email", "").strip()
+    worker_url = req_data.get("worker_url", "https://yalla-licensing.workers.dev")
+
+    if not key:
+        return jsonify({"success": False, "error": "Please enter a license key."}), 400
+
+    ok, res = verify_and_activate(key, email=email, cloudflare_url=worker_url)
+    if ok:
+        log_msg(f"[+] License ACTIVATED successfully for {email} ({res.get('plan')}) [OK]!")
+        return jsonify({"success": True, "details": res})
+    else:
+        log_msg(f"[-] License activation failed: {res.get('error')}")
+        return jsonify({"success": False, "error": res.get("error", "Invalid license key.")}), 400
+
+
 @app.route("/api/start_farming", methods=["POST"])
 def start_farming():
     """Starts farming across selected emulator instances with slice partitioning."""
+    # Security: Verify License first!
+    active, lic_data = is_activated()
+    if not active:
+        return jsonify({
+            "success": False,
+            "error": "Software is NOT activated! Please activate your license key to unlock farming."
+        }), 403
+
     data = request.json or {}
     devices = data.get("devices", [])
     if not devices:
