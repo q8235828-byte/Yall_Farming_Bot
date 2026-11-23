@@ -9,7 +9,7 @@ from datetime import datetime
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 LICENSE_FILE = os.path.join(CURRENT_DIR, ".license.json")
-DEFAULT_CLOUDFLARE_URL = "https://yalla-licensing.workers.dev"
+DEFAULT_CLOUDFLARE_URL = "https://yalla-licensing.q8235828.workers.dev"
 PAGES_DEV_BUY_URL = "https://yalla-farming.pages.dev"
 
 
