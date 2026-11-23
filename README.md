@@ -20,6 +20,29 @@ Ultra-fast, autonomous reward farming and account cycling bot for **Yalla Ludo**
 
 ---
 
+## 📱 Target Screen Display & Emulator Settings (Design Specifications)
+
+This bot's coordinate mapping, template recognition, and checkmark algorithms are strictly calibrated and designed for:
+
+| Setting | Required Value | Notes |
+|---|---|---|
+| **Recommended Emulator** | **MEmu Play** | Compatible with Android 7.1 & 9.0 (64-bit / 32-bit) |
+| **Display Resolution** | **`800 x 1280`** | Width: `800px`, Height: `1280px` (Portrait / Tablet) |
+| **DPI / Density** | **`266 DPI`** | Exact physical density verified via `adb shell wm density` |
+| **Orientation** | **Portrait** | Standard mobile vertical screen |
+| **Graphics Engine** | **DirectX / OpenGL** | Standard default MEmu render mode |
+
+> [!IMPORTANT]
+> **MEmu Display Setup Instructions:**
+> 1. Open **MEmu Multi-Instance Manager**.
+> 2. Click on the **Settings (Gear icon ⚙️)** of each instance.
+> 3. Go to the **Display** tab.
+> 4. Select **Resolution: Customize**.
+> 5. Enter **Width: 800**, **Height: 1280**, and **DPI: 266**.
+> 6. Click **Save** and restart the instance.
+
+---
+
 ## 📋 Prerequisites & Setup
 
 ### 1. Requirements
