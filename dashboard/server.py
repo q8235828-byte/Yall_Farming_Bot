@@ -80,29 +80,82 @@ def index():
     return render_template("index.html")
 
 
+MEMUC_PATHS = [
+    r"D:\Program Files\Microvirt\MEmu\memuc.exe",
+    r"C:\Program Files\Microvirt\MEmu\memuc.exe",
+    r"C:\Program Files (x86)\Microvirt\MEmu\memuc.exe"
+]
+MEMUC_BIN = next((p for p in MEMUC_PATHS if os.path.exists(p)), None)
+
+
 @app.route("/api/devices")
 def get_devices():
-    """Detects active ADB emulator ports (MEmu)."""
-    devices = []
+    """Detects active and available MEmu instances with real live status."""
+    online_adb_ports = set()
     try:
-        out = subprocess.check_output(["adb", "devices"], text=True)
+        out = subprocess.check_output(["adb", "devices"], text=True, timeout=5)
         for line in out.splitlines():
             line = line.strip()
             if "\tdevice" in line:
-                port = line.split("\t")[0].strip()
-                devices.append({
-                    "port": port,
-                    "name": f"MEmu Instance ({port.split(':')[-1] if ':' in port else port})"
-                })
-    except Exception as e:
-        log_msg(f"Error scanning ADB devices: {e}")
+                online_adb_ports.add(line.split("\t")[0].strip())
+    except Exception:
+        pass
 
-    # Fallback to standard MEmu default ports if none attached
+    devices = []
+
+    # Query memuc if available
+    if MEMUC_BIN:
+        try:
+            out = subprocess.check_output([MEMUC_BIN, "listvms"], text=True, timeout=5)
+            for line in out.splitlines():
+                parts = line.strip().split(",")
+                if len(parts) >= 4:
+                    idx = int(parts[0])
+                    name = parts[1]
+                    is_running = parts[3].strip() == "1"
+                    port = f"127.0.0.1:{21503 + idx * 10}"
+
+                    # Double check with adb
+                    is_online = is_running and (port in online_adb_ports)
+
+                    devices.append({
+                        "index": idx,
+                        "name": name,
+                        "port": port,
+                        "is_online": is_online,
+                        "status_text": "Online" if is_online else "Offline"
+                    })
+        except Exception as e:
+            log_msg(f"memuc error: {e}")
+
+    # Fallback if memuc not accessible
     if not devices:
-        for p in ["127.0.0.1:21503", "127.0.0.1:21513", "127.0.0.1:21523"]:
-            devices.append({"port": p, "name": f"MEmu ({p.split(':')[-1]})"})
+        for idx, p in enumerate(["127.0.0.1:21503", "127.0.0.1:21513", "127.0.0.1:21523"]):
+            is_on = p in online_adb_ports
+            devices.append({
+                "index": idx,
+                "name": f"MEmu - {idx}",
+                "port": p,
+                "is_online": is_on,
+                "status_text": "Online" if is_on else "Offline"
+            })
 
     return jsonify({"devices": devices})
+
+
+@app.route("/api/launch_instance", methods=["POST"])
+def launch_instance():
+    """Starts a MEmu emulator instance via memuc."""
+    if not MEMUC_BIN:
+        return jsonify({"success": False, "error": "memuc.exe not found"}), 400
+
+    idx = request.json.get("index", 0)
+    log_msg(f"[*] Requesting MEmu to launch instance index {idx}...")
+    try:
+        subprocess.Popen([MEMUC_BIN, "start", "-i", str(idx)])
+        return jsonify({"success": True, "message": f"Launching MEmu instance {idx}..."})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
 
 
 @app.route("/api/upload_sheet", methods=["POST"])
